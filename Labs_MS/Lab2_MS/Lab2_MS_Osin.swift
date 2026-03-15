@@ -36,55 +36,55 @@ struct Lab2_MS: View {
     let colors: [Color] = [.red, .green, .blue, .orange, .purple]
     
     var body: some View {
-        ScrollView {
+        ScrollView{
             VStack(alignment: .leading, spacing: 20) {
-                
-                // Параметры
-                GroupBox("Параметры") {
+                GroupBox("Входные данные") {
                     VStack(alignment: .leading) {
                         TextField("Шаг h", value: $stepInput, format: .number)
                             .textFieldStyle(.roundedBorder)
+                            .border(Color.white)
+                            .fontDesign(Font.Design.monospaced)
+                            .frame(width: 100, height: 30)
                         HStack {
-                            Text("Система уравнений 5-го порядка")
-                            Spacer()
+                            Text("Система уравнений 5-го порядка\t\t\t\t")
                             Text("Исходные данные")
-                        }
+                        }.bold(true)
                         HStack(alignment: .top) {
                             Image("Formula")
                                 .resizable()
-                                .frame(width: 300, height: 200)
+                                .frame(width: 300, height: 180)
                             VStack(alignment: .leading) {
-                                Text("p = \(p)")
-                                Text("a = \(a)")
-                                Text("m = \(m)")
-                                Text("u = \(u)")
-                                Text("cx = \(cx)")
-                                Text("cy = \(cy)")
-                                Text("M1 = \(M1)")
-                                Text("M2 = \(M2)")
-                                Text("T = \(T)")
-                                Text("g = \(g)")
+                                Text("p = \(p, specifier: "%.0f")")
+                                Text("a = \(a, specifier: "%.1f")")
+                                Text("m = \(m, specifier: "%.0f")")
+                                Text("u = \(u, specifier: "%.0f")")
+                                Text("cx = \(cx, specifier: "%.2f")")
+                                Text("cy = \(cy, specifier: "%.0f")")
+                                Text("M1 = \(M1, specifier: "%.2f")")
+                                Text("M2 = \(M2, specifier: "%.2f")")
+                                Text("T = \(T, specifier: "%.0f")")
+                                Text("g = \(g, specifier: "%.2f")")
                             }
-                        }
-                        HStack {
-                            ForEach(0..<x0.count, id: \.self) { i in
-                                Text("x\(i+1)(0) = \(x0[i])")
+                            VStack {
+                                ForEach(0..<x0.count, id: \.self) { i in
+                                    Text("x\(i+1)(0) = \(String(format: "%.2f", x0[i]))")
+                                }
                             }
                         }
                     }
-                    .padding()
                 }
                 
-                HStack {
+                HStack(alignment: .center) {
                     Button("Решить систему") {
                         solveSystem(step: stepInput)
-                    }
+                    }.cornerRadius(25)
+                        .foregroundStyle(Color.blue)
+                        .fontDesign(Font.Design.serif)
                     Button("Автоподбор шага") {
                         autoSelectStep()
-                    }
+                    }.cornerRadius(25)
+                        .foregroundStyle(Color.red.mix(with: .white, by: 0.4))
                 }
-                
-                // Таблица решения
                 if !data.isEmpty {
                     GroupBox("Таблица решения") {
                         ScrollView(.horizontal) {
@@ -107,12 +107,7 @@ struct Lab2_MS: View {
                             }
                         }
                         .frame(height: 150)
-                        VStack(alignment: .leading) {
-                            Text("x(T): " + xT.enumerated().map { "x\($0.offset+1)=\($0.element)" }.joined(separator: ", "))
-                            Text("δ = \(delta)")
-                            Text("Авто шаг = \(autoStep)")
-                        }
-                        .padding(.top)
+
                     }
                 }
                 
@@ -129,7 +124,7 @@ struct Lab2_MS: View {
                                     )
                                     .foregroundStyle(colors[i])
                                 }
-                                .frame(height: 70)
+                                .frame(width: 200, height: 150)
                             }
                         }
                     }
@@ -227,26 +222,31 @@ extension Lab2_MS {
     }
     
     func autoSelectStep() {
-        var h = 0.5
+        // ЭТАЛОН ВЫЧИСЛЯЕМ ОДИН РАЗ ДО ЦИКЛА!
         let (_, xRef) = rk4(step: 0.001)
         let xRefT = xRef.last![0]
         
-        while true {
+        var h = 0.5
+        
+        // Максимум 10 итераций вместо бесконечного цикла
+        for _ in 0..<10 {
             let (tVals, xVals) = rk4(step: h)
             let xTcurr = xVals.last![0]
             let d = abs(xTcurr - xRefT)/abs(xRefT)
             
             if d <= 0.01 {
+                // Нашли подходящий шаг
                 autoStep = h
                 delta = d
                 xT = xVals.last!
                 data = zip(tVals, xVals).map { DataPoint(t: $0.0, values: $0.1) }
                 stepInput = h
                 computeDeltaH()
-                break
+                return  
             }
+            
             h /= 2
-            if h < 1e-5 { break }
+            if h < 0.01 { break }
         }
     }
 }
