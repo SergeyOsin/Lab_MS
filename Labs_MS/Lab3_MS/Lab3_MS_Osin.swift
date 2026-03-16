@@ -9,8 +9,9 @@ struct TableRow: Identifiable {
 struct StepRow: Identifiable {
     let id = UUID()
     let rowTitle: String
-    let c0, c1, c2, c3, c4, c5, c6: String
+    var c0, c1, c2, c3, c4, c5, c6: String
 }
+
 
 struct Lab3_MS: View {
     @State private var tableData: [TableRow] = [
@@ -19,10 +20,17 @@ struct Lab3_MS: View {
         TableRow(x: "x3", z1: "z4", z2: "z5", z3: "z6", z4: "z1", z5: "z2", z6: "z3")
     ]
     
-    @State private var StatusZ: String = "z1"
-    @State private var StatusX: String = "x1"
-    
-    @State private var logicRows: [StepRow] = []
+    @State private var StatusZ: String = "z1";
+    @State private var StatusX: String = "x1";
+    @State private var filledSteps: Int = 0;
+    @State private var isBlocked=true;
+    @State private var showAlert=false;
+    @State private var logicRows: [StepRow] = [
+            StepRow(rowTitle: "Входные символы",
+                    c0: "", c1: "", c2: "", c3: "", c4: "", c5: "", c6: ""),
+            StepRow(rowTitle: "Состояния автомата",
+                    c0: "", c1: "", c2: "", c3: "", c4: "", c5: "", c6: "")
+    ];
     
     func nextState(from state: String, by input: String) -> String {
         guard let row = tableData.first(where: { $0.x == input }) else { return state }
@@ -38,32 +46,68 @@ struct Lab3_MS: View {
     }
     
     func runMachine() {
-        var colsZ: [String] = Array(repeating: "", count: 7)
-        var colsX: [String] = Array(repeating: "", count: 7)
-        var colsT: [String] = Array(repeating: "", count: 7)
-        colsT[0] = "-"
-        colsX[0] = "-"
-        colsZ[0] = StatusZ
-        
-        var z = StatusZ
-        
-        for i in 1...6 {
-            let x = StatusX
-            colsT[i] = "\(i)"
-            colsX[i] = x
-            let zNext = nextState(from: z, by: x)
-            colsZ[i] = zNext
-            z = zNext
+        isBlocked=false;
+        if filledSteps==6{
+            showAlert=true;
+            return;
+        }
+        else if filledSteps == 0 {
+            logicRows[0].c0 = "-"
+            logicRows[1].c0 = StatusZ
+        }
+        showAlert=false;
+        let stepIndex = filledSteps + 1
+        let currentZ: String
+        if filledSteps == 0 {
+            currentZ = StatusZ
+        } else {
+            switch filledSteps {
+            case 1: currentZ = logicRows[1].c1
+            case 2: currentZ = logicRows[1].c2
+            case 3: currentZ = logicRows[1].c3
+            case 4: currentZ = logicRows[1].c4
+            case 5: currentZ = logicRows[1].c5
+            case 6: currentZ = logicRows[1].c6
+            default: currentZ = StatusZ
+            }
         }
         
-        logicRows = [
-            StepRow(rowTitle: "Входные символы",
-                    c0: colsX[0], c1: colsX[1], c2: colsX[2], c3: colsX[3],
-                    c4: colsX[4], c5: colsX[5], c6: colsX[6]),
-            StepRow(rowTitle: "Состояния автомата",
-                    c0: colsZ[0], c1: colsZ[1], c2: colsZ[2], c3: colsZ[3],
-                    c4: colsZ[4], c5: colsZ[5], c6: colsZ[6])
-        ]
+        let x = StatusX
+        let nextZ = nextState(from: currentZ, by: x)
+        
+        switch stepIndex {
+        case 1:
+            logicRows[0].c1 = x
+            logicRows[1].c1 = nextZ
+        case 2:
+            logicRows[0].c2 = x
+            logicRows[1].c2 = nextZ
+        case 3:
+            logicRows[0].c3 = x
+            logicRows[1].c3 = nextZ
+        case 4:
+            logicRows[0].c4 = x
+            logicRows[1].c4 = nextZ
+        case 5:
+            logicRows[0].c5 = x
+            logicRows[1].c5 = nextZ
+        case 6:
+            logicRows[0].c6 = x
+            logicRows[1].c6 = nextZ
+        default:
+            break
+        }
+        
+        filledSteps += 1
+        }
+    
+    func ClearTable(){
+        logicRows[0] = StepRow(rowTitle: "Входные символы",
+        c0: "", c1: "", c2: "", c3: "", c4: "", c5: "", c6: "")
+        logicRows[1] = StepRow(rowTitle: "Состояния автомата",
+        c0: "", c1: "", c2: "", c3: "", c4: "", c5: "", c6: "")
+        isBlocked=true;
+        filledSteps=0;
     }
     
     var body: some View {
@@ -110,12 +154,12 @@ struct Lab3_MS: View {
                         Text("z6").tag("z6")
                     }
                     .pickerStyle(.segmented)
-                    .frame(width: 210)
+                    .frame(width: 220)
                     .frame(height: 70)
-                    .padding(1)
-                    .background(Color.black.mix(with: .white, by:0.3))
+                    .background(Color.black.mix(with: .white, by:0.25))
                 }
                 .border(Color.black,width: 3)
+                .disabled(!isBlocked)
                 
                 GroupBox{
                     Text("Выберите вход")
@@ -123,9 +167,9 @@ struct Lab3_MS: View {
                         Text("x1").tag("x1")
                         Text("x2").tag("x2")
                         Text("x3").tag("x3")
-                    }
-                    .pickerStyle(.inline)
-                    .frame(width: 210)
+                    }.pickerStyle(.inline)
+                    .frame(width: 220)
+                    .padding(1)
                     .frame(height:70)
                     .background(Color.black.mix(with: .white, by: 0.2))
                 }
@@ -133,15 +177,21 @@ struct Lab3_MS: View {
             }
             
             Spacer()
-            
-            Button("Запустить") {
-                runMachine()
+            HStack{
+                Button("Запустить") {runMachine()}
+                .padding(1)
+                .background(Color.blue)
+                .foregroundStyle(.yellow)
+                .font(Font.headline)
+                .cornerRadius(5)
+                Button("Очистить таблицу"){ClearTable()}
+                    .backgroundStyle(Color.black)
+                    .foregroundStyle(Color.red)
+                    .font(Font.subheadline)
+                    .cornerRadius(5)
+                    .padding(1)
             }
-            .padding(6)
-            .background(Color.blue)
-            .foregroundStyle(.yellow)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-        
+            
             HStack(alignment: .top, spacing: 5){
                 GroupBox("Логика работы автомата") {
                     Table(logicRows) {
@@ -187,8 +237,11 @@ struct Lab3_MS: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(8)
-        .onAppear {
-            runMachine()
+        .onAppear {ClearTable()}
+        .alert("Таблица заполнена", isPresented: $showAlert){
+            Button("ОК",role: .close){}
+        } message: {
+            Text("Все строки таблицы заполнены")
         }
     }
 }
@@ -196,3 +249,5 @@ struct Lab3_MS: View {
 #Preview {
     Lab3_MS()
 }
+
+
