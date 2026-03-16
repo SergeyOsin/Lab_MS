@@ -87,7 +87,7 @@ struct Lab2_MS: View {
                 }
                 if !data.isEmpty {
                     GroupBox("Таблица решения") {
-                        ScrollView(.horizontal) {
+                        ScrollView([.horizontal, .vertical]) {
                             VStack {
                                 HStack {
                                     Text("t").frame(width: 60)
@@ -124,7 +124,7 @@ struct Lab2_MS: View {
                                     )
                                     .foregroundStyle(colors[i])
                                 }
-                                .frame(width: 200, height: 150)
+                                .frame(width: 500, height: 150)
                             }
                         }
                     }
@@ -175,12 +175,14 @@ extension Lab2_MS {
         var x = Array(repeating: x0, count: N+1)
         
         for i in 0..<N {
-            let ti = Double(i) * h
-            t.append(ti + h)
-            let k1 = f(t: ti, x: x[i])
-            let k2 = f(t: ti + h/2, x: zip(x[i], k1).map {$0 + h*$1/2})
-            let k3 = f(t: ti + h/2, x: zip(x[i], k2).map {$0 + h*$1/2})
-            let k4 = f(t: ti + h, x: zip(x[i], k3).map {$0 + h*$1})
+            let ti = Double(i + 1) * h
+            t.append(ti)
+            
+            let k1 = f(t: t[i], x: x[i])
+            let k2 = f(t: t[i] + h/2, x: zip(x[i], k1).map {$0 + h*$1/2})
+            let k3 = f(t: t[i] + h/2, x: zip(x[i], k2).map {$0 + h*$1/2})
+            let k4 = f(t: t[i] + h, x: zip(x[i], k3).map {$0 + h*$1})
+            
             var next = [Double]()
             for j in 0..<5 {
                 next.append(x[i][j] + h*(k1[j] + 2*k2[j] + 2*k3[j] + k4[j])/6)
@@ -189,9 +191,10 @@ extension Lab2_MS {
         }
         return (t, x)
     }
+
     
     func computeDeltaH() {
-        let (_, xRef) = rk4(step: 0.001)
+        let (_, xRef) = rk4(step: 0.01)
         let xRefT = xRef.last![0]
         
         var deltaList: [DataPoint] = []
@@ -222,20 +225,19 @@ extension Lab2_MS {
     }
     
     func autoSelectStep() {
-        // ЭТАЛОН ВЫЧИСЛЯЕМ ОДИН РАЗ ДО ЦИКЛА!
-        let (_, xRef) = rk4(step: 0.001)
+        
+        let (_, xRef) = rk4(step: 0.01)
         let xRefT = xRef.last![0]
         
         var h = 0.5
         
-        // Максимум 10 итераций вместо бесконечного цикла
         for _ in 0..<10 {
             let (tVals, xVals) = rk4(step: h)
             let xTcurr = xVals.last![0]
             let d = abs(xTcurr - xRefT)/abs(xRefT)
             
             if d <= 0.01 {
-                // Нашли подходящий шаг
+
                 autoStep = h
                 delta = d
                 xT = xVals.last!
