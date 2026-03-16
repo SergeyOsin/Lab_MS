@@ -117,7 +117,8 @@ struct Lab3_MS: View {
                 .multilineTextAlignment(.center)
                 .foregroundStyle(Color.blue.mix(with: .white, by: 0.45))
             GroupBox{
-                Text("X={x1,x2,x3} - входные сигналы;\nZ={z1,z2,z3,z4,z5,z6} - множество состояний;\nf-функция переходов;\nz[n+1]=f(z[n],x[n])")
+                Text("F=(X,Z,f),")
+                Text("где X={x1,x2,x3} - входные сигналы;\nZ={z1,z2,z3,z4,z5,z6} - множество состояний;\nf-функция переходов;\nz[n+1]=f(z[n],x[n])")
                     .font(.system(size: 12))
                     .foregroundStyle(Color.blue.mix(with: .white, by: 0.7))
             }.frame(height: 100)
@@ -241,8 +242,9 @@ struct Lab3_MS: View {
         .alert("Таблица заполнена", isPresented: $showAlert){
             Button("ОК",role: .close){}
         } message: {
-            Text("Все строки таблицы заполнены")
+            Text("Все строки таблицы заполнены. Очистите таблицу")
         }
+        
     }
 }
 
