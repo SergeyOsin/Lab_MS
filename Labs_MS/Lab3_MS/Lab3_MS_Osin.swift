@@ -1,5 +1,6 @@
 import SwiftUI
 
+
 struct TableRow: Identifiable {
     let id = UUID()
     let x: String
@@ -12,6 +13,12 @@ struct StepRow: Identifiable {
     var c0, c1, c2, c3, c4, c5, c6: String
 }
 
+struct Edge: Identifiable, Hashable {
+    let id = UUID()
+    let from: String
+    let to: String
+    let input: String
+}
 
 struct Lab3_MS: View {
     @State private var tableData: [TableRow] = [
@@ -20,17 +27,41 @@ struct Lab3_MS: View {
         TableRow(x: "x3", z1: "z4", z2: "z5", z3: "z6", z4: "z1", z5: "z2", z6: "z3")
     ]
     
-    @State private var StatusZ: String = "z1";
-    @State private var StatusX: String = "x1";
-    @State private var filledSteps: Int = 0;
-    @State private var isBlocked=true;
-    @State private var showAlert=false;
+    @State private var StatusZ: String = "z1"
+    @State private var StatusX: String = "x1"
+    @State private var filledSteps: Int = 0
+    @State private var isBlocked = true
+    @State private var showAlert = false
     @State private var logicRows: [StepRow] = [
-            StepRow(rowTitle: "Входные символы",
-                    c0: "", c1: "", c2: "", c3: "", c4: "", c5: "", c6: ""),
-            StepRow(rowTitle: "Состояния автомата",
-                    c0: "", c1: "", c2: "", c3: "", c4: "", c5: "", c6: "")
-    ];
+        StepRow(rowTitle: "Входные символы", c0: "", c1: "", c2: "", c3: "", c4: "", c5: "", c6: ""),
+        StepRow(rowTitle: "Состояния автомата", c0: "", c1: "", c2: "", c3: "", c4: "", c5: "", c6: "")
+    ]
+    @State private var usedEdges: Set<Edge> = []
+    
+    private let nodePositions: [String: CGPoint] = [
+        "z1": .init(x: 60,  y: 60),
+        "z2": .init(x: 220, y: 60),
+        "z3": .init(x: 380, y: 60),
+        "z4": .init(x: 60,  y: 180),
+        "z5": .init(x: 220, y: 180),
+        "z6": .init(x: 380, y: 180)
+    ]
+    
+    private var edges: [Edge] {
+        var result: [Edge] = []
+        for row in tableData {
+            let x = row.x
+            result.append(contentsOf: [
+                Edge(from: "z1", to: row.z1, input: x),
+                Edge(from: "z2", to: row.z2, input: x),
+                Edge(from: "z3", to: row.z3, input: x),
+                Edge(from: "z4", to: row.z4, input: x),
+                Edge(from: "z5", to: row.z5, input: x),
+                Edge(from: "z6", to: row.z6, input: x)
+            ])
+        }
+        return result
+    }
     
     func nextState(from state: String, by input: String) -> String {
         guard let row = tableData.first(where: { $0.x == input }) else { return state }
@@ -41,21 +72,28 @@ struct Lab3_MS: View {
         case "z4": return row.z4
         case "z5": return row.z5
         case "z6": return row.z6
-        default:   return state
+        default: return state
         }
     }
     
+    func cellView(_ text: String, col: Int, rowIndex: Int) -> some View {
+        _ = !text.isEmpty
+        return Text(text)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(3)
+    }
+    
     func runMachine() {
-        isBlocked=false;
-        if filledSteps==6{
-            showAlert=true;
-            return;
+        isBlocked = false
+        if filledSteps == 6 {
+            showAlert = true
+            return
         }
         else if filledSteps == 0 {
             logicRows[0].c0 = "-"
             logicRows[1].c0 = StatusZ
         }
-        showAlert=false;
+        showAlert = false
         let stepIndex = filledSteps + 1
         let currentZ: String
         if filledSteps == 0 {
@@ -74,6 +112,9 @@ struct Lab3_MS: View {
         
         let x = StatusX
         let nextZ = nextState(from: currentZ, by: x)
+        
+        let usedEdge = Edge(from: currentZ, to: nextZ, input: x)
+        usedEdges.insert(usedEdge)
         
         switch stepIndex {
         case 1:
@@ -94,57 +135,49 @@ struct Lab3_MS: View {
         case 6:
             logicRows[0].c6 = x
             logicRows[1].c6 = nextZ
-        default:
-            break
+        default: break
         }
         
         filledSteps += 1
-        }
+    }
     
-    func ClearTable(){
-        logicRows[0] = StepRow(rowTitle: "Входные символы",
-        c0: "", c1: "", c2: "", c3: "", c4: "", c5: "", c6: "")
-        logicRows[1] = StepRow(rowTitle: "Состояния автомата",
-        c0: "", c1: "", c2: "", c3: "", c4: "", c5: "", c6: "")
-        isBlocked=true;
-        filledSteps=0;
+    func ClearTable() {
+        logicRows[0] = StepRow(rowTitle: "Входные символы", c0: "", c1: "", c2: "", c3: "", c4: "", c5: "", c6: "")
+        logicRows[1] = StepRow(rowTitle: "Состояния автомата", c0: "", c1: "", c2: "", c3: "", c4: "", c5: "", c6: "")
+        isBlocked = true
+        filledSteps = 0
+        usedEdges.removeAll()
     }
     
     var body: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: 8) {
             Text("Вариант - 2. Тип автомата - без выхода")
                 .font(.largeTitle)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(Color.blue.mix(with: .white, by: 0.45))
-            GroupBox{
-                Text("F=(X,Z,f),")
-                Text("где X={x1,x2,x3} - входные сигналы;\nZ={z1,z2,z3,z4,z5,z6} - множество состояний;\nf-функция переходов;\nz[n+1]=f(z[n],x[n])")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color.blue.mix(with: .white, by: 0.7))
-            }.frame(height: 100)
-            HStack(alignment: .top, spacing: 5){
-                GroupBox("Таблица переходов"){
-                    Table(tableData) {
-                        TableColumn("Вход.символы") { row in
-                            Text(row.x)
-                                .frame(maxWidth: .infinity, alignment: .center)
-                        }
-                        .width(100)
-                        
-                        TableColumn("z1") { row in Text(row.z1).frame(maxWidth: .infinity, alignment: .center) }.width(45)
-                        TableColumn("z2") { row in Text(row.z2).frame(maxWidth: .infinity, alignment: .center) }.width(45)
-                        TableColumn("z3") { row in Text(row.z3).frame(maxWidth: .infinity, alignment: .center) }.width(45)
-                        TableColumn("z4") { row in Text(row.z4).frame(maxWidth: .infinity, alignment: .center) }.width(45)
-                        TableColumn("z5") { row in Text(row.z5).frame(maxWidth: .infinity, alignment: .center) }.width(45)
-                        TableColumn("z6") { row in Text(row.z6).frame(maxWidth: .infinity, alignment: .center) }.width(45)
+            
+            GroupBox("Таблица переходов") {
+                Table(tableData) {
+                    TableColumn("Вход.символы") { row in
+                        Text(row.x)
+                            .frame(maxWidth: .infinity, alignment: .center)
                     }
-                    .font(.system(size: 13, weight: .medium))
-                    .frame(height: 110)
-                    .frame(width: 500)
+                    .width(100)
+                    
+                    TableColumn("z1") { row in Text(row.z1).frame(maxWidth: .infinity, alignment: .center) }.width(45)
+                    TableColumn("z2") { row in Text(row.z2).frame(maxWidth: .infinity, alignment: .center) }.width(45)
+                    TableColumn("z3") { row in Text(row.z3).frame(maxWidth: .infinity, alignment: .center) }.width(45)
+                    TableColumn("z4") { row in Text(row.z4).frame(maxWidth: .infinity, alignment: .center) }.width(45)
+                    TableColumn("z5") { row in Text(row.z5).frame(maxWidth: .infinity, alignment: .center) }.width(45)
+                    TableColumn("z6") { row in Text(row.z6).frame(maxWidth: .infinity, alignment: .center) }.width(45)
                 }
+                .font(.system(size: 13, weight: .medium))
+                .frame(height: 110)
             }
-            HStack(alignment: .top, spacing: 3){
-                GroupBox{
+            .frame(width: 500)
+            
+            HStack(alignment: .top, spacing: 3) {
+                GroupBox {
                     Text("Выберите состояние")
                     Picker("Состояние", selection: $StatusZ) {
                         Text("z1").tag("z1")
@@ -157,35 +190,36 @@ struct Lab3_MS: View {
                     .pickerStyle(.segmented)
                     .frame(width: 220)
                     .frame(height: 70)
-                    .background(Color.black.mix(with: .white, by:0.25))
+                    .background(Color.black.mix(with: .white, by: 0.25))
                 }
-                .border(Color.black,width: 3)
+                .border(Color.black, width: 3)
                 .disabled(!isBlocked)
                 
-                GroupBox{
+                GroupBox {
                     Text("Выберите вход")
-                    Picker("Входной символ",selection: $StatusX){
+                    Picker("Входной символ", selection: $StatusX) {
                         Text("x1").tag("x1")
                         Text("x2").tag("x2")
                         Text("x3").tag("x3")
-                    }.pickerStyle(.inline)
+                    }
+                    .pickerStyle(.inline)
                     .frame(width: 220)
                     .padding(1)
-                    .frame(height:70)
+                    .frame(height: 70)
                     .background(Color.black.mix(with: .white, by: 0.2))
                 }
-                .border(Color.black,width: 3)
+                .border(Color.black, width: 3)
             }
             
-            Spacer()
-            HStack{
-                Button("Запустить") {runMachine()}
-                .padding(1)
-                .background(Color.blue)
-                .foregroundStyle(.yellow)
-                .font(Font.headline)
-                .cornerRadius(5)
-                Button("Очистить таблицу"){ClearTable()}
+            HStack {
+                Button("Запустить") { runMachine() }
+                    .padding(1)
+                    .background(Color.blue)
+                    .foregroundStyle(.yellow)
+                    .font(Font.headline)
+                    .cornerRadius(5)
+                
+                Button("Очистить таблицу") { ClearTable() }
                     .backgroundStyle(Color.black)
                     .foregroundStyle(Color.red)
                     .font(Font.subheadline)
@@ -193,63 +227,136 @@ struct Lab3_MS: View {
                     .padding(1)
             }
             
-            HStack(alignment: .top, spacing: 5){
-                GroupBox("Логика работы автомата") {
-                    Table(logicRows) {
-                        TableColumn("") { row in
-                            Text(row.rowTitle)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .width(135)
-                        
-                        TableColumn("-") { row in
-                            Text(row.c0).frame(maxWidth: .infinity, alignment: .center)
-                        }.width(40)
-                        
-                        TableColumn("1") { row in
-                            Text(row.c1).frame(maxWidth: .infinity, alignment: .center)
-                        }.width(40)
-                        
-                        TableColumn("2") { row in
-                            Text(row.c2).frame(maxWidth: .infinity, alignment: .center)
-                        }.width(40)
-                        
-                        TableColumn("3") { row in
-                            Text(row.c3).frame(maxWidth: .infinity, alignment: .center)
-                        }.width(40)
-                        
-                        TableColumn("4") { row in
-                            Text(row.c4).frame(maxWidth: .infinity, alignment: .center)
-                        }.width(40)
-                        
-                        TableColumn("5") { row in
-                            Text(row.c5).frame(maxWidth: .infinity, alignment: .center)
-                        }.width(40)
-                        
-                        TableColumn("6") { row in
-                            Text(row.c6).frame(maxWidth: .infinity, alignment: .center)
-                        }.width(40)
+            
+            GroupBox("Логика работы автомата") {
+                Table(logicRows) {
+                    TableColumn("") { row in
+                        Text(row.rowTitle)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .frame(height: 80)
-                    .frame(width: 565)
+                    .width(135)
+                    
+                    TableColumn("-") { row in
+                        if let idx = logicRows.firstIndex(where: { $0.id == row.id }) {
+                            cellView(row.c0, col: 0, rowIndex: idx)
+                        }
+                    }.width(40)
+                    
+                    TableColumn("1") { row in
+                        if let idx = logicRows.firstIndex(where: { $0.id == row.id }) {
+                            cellView(row.c1, col: 1, rowIndex: idx)
+                        }
+                    }.width(40)
+                    
+                    TableColumn("2") { row in
+                        if let idx = logicRows.firstIndex(where: { $0.id == row.id }) {
+                            cellView(row.c2, col: 2, rowIndex: idx)
+                        }
+                    }.width(40)
+                    
+                    TableColumn("3") { row in
+                        if let idx = logicRows.firstIndex(where: { $0.id == row.id }) {
+                            cellView(row.c3, col: 3, rowIndex: idx)
+                        }
+                    }.width(40)
+                    
+                    TableColumn("4") { row in
+                        if let idx = logicRows.firstIndex(where: { $0.id == row.id }) {
+                            cellView(row.c4, col: 4, rowIndex: idx)
+                        }
+                    }.width(40)
+                    
+                    TableColumn("5") { row in
+                        if let idx = logicRows.firstIndex(where: { $0.id == row.id }) {
+                            cellView(row.c5, col: 5, rowIndex: idx)
+                        }
+                    }.width(40)
+                    
+                    TableColumn("6") { row in
+                        if let idx = logicRows.firstIndex(where: { $0.id == row.id }) {
+                            cellView(row.c6, col: 6, rowIndex: idx)
+                        }
+                    }.width(40)
                 }
-                Spacer()
+                .frame(height: 90)
+            }
+            .frame(width: 565)
+            
+            
+            GroupBox("Граф состояний автомата") {
+                ZStack {
+
+                    ForEach(edges) { edge in
+                        if let p1 = nodePositions[edge.from],
+                           let p2 = nodePositions[edge.to] {
+                            Path { path in
+                                path.move(to: p1)
+                                path.addLine(to: p2)
+                            }
+                            .stroke(Color.gray, lineWidth: 1.5)
+                            
+   
+                            let mid = CGPoint(
+                                x: (p1.x + p2.x) / 2,
+                                y: (p1.y + p2.y) / 2 + 5
+                            )
+                            Text(edge.input)
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(.blue)
+                                .position(mid)
+                        }
+                    }
+                    
+
+                    ForEach(edges.filter { usedEdges.contains($0) }) { edge in
+                        if let p1 = nodePositions[edge.from],
+                           let p2 = nodePositions[edge.to] {
+                            Path { path in
+                                path.move(to: p1)
+                                path.addLine(to: p2)
+                            }
+                            .stroke(Color.red, lineWidth: 4)
+                            
+                            Text(edge.input)
+                                .font(.system(size: 12, weight: .heavy))
+                                .foregroundColor(.red)
+                                .position(CGPoint(x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 + 5))
+                        }
+                    }
+                    
+                    
+                    ForEach(nodePositions.keys.sorted(), id: \.self) { z in
+                        if let p = nodePositions[z] {
+                            Circle()
+                                .fill(z == StatusZ ? Color.green : Color.white)
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.black, lineWidth: 2)
+                                )
+                                .frame(width: 35, height: 35)
+                                .position(p)
+                            
+                            Text(z)
+                                .font(.system(size: 12, weight: .heavy))
+                                .foregroundColor(.black)
+                                .position(p)
+                        }
+                    }
+                }
+                .frame(width: 450, height: 250)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(8)
-        .onAppear {ClearTable()}
-        .alert("Таблица заполнена", isPresented: $showAlert){
-            Button("ОК",role: .close){}
+        .padding(12)
+        .onAppear { ClearTable() }
+        .alert("Таблица заполнена", isPresented: $showAlert) {
+            Button("ОК", role: .close) { }
         } message: {
             Text("Все строки таблицы заполнены. Очистите таблицу")
         }
-        
     }
 }
 
 #Preview {
     Lab3_MS()
 }
-
-
