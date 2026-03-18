@@ -33,7 +33,9 @@ struct MainView: View {
                     Lab3_MS()
                 }.background(Color.blue)
                     .cornerRadius(RADIUS)
-                NavigationLink("Лабораторная работа №4"){} .background(Color.red)
+                NavigationLink("Лабораторная работа №4"){
+                    Lab4_MS()
+                } .background(Color.red)
                     .cornerRadius(RADIUS)
             }.frame(width:750, height:250)
             
