@@ -1,6 +1,5 @@
 import SwiftUI
 
-
 struct TableRow: Identifiable {
     let id = UUID()
     let x: String
@@ -37,6 +36,8 @@ struct Lab3_MS: View {
         StepRow(rowTitle: "Состояния автомата", c0: "", c1: "", c2: "", c3: "", c4: "", c5: "", c6: "")
     ]
     @State private var usedEdges: Set<Edge> = []
+    @State private var previewEdge: Edge? = nil
+    @State private var nextPreviewState: String? = nil
     
     private let nodePositions: [String: CGPoint] = [
         "z1": .init(x: 60,  y: 60),
@@ -72,15 +73,34 @@ struct Lab3_MS: View {
         case "z4": return row.z4
         case "z5": return row.z5
         case "z6": return row.z6
-        default: return state
+        default:   return state
         }
     }
     
     func cellView(_ text: String, col: Int, rowIndex: Int) -> some View {
-        _ = !text.isEmpty
-        return Text(text)
+        Text(text)
             .frame(maxWidth: .infinity, alignment: .center)
             .padding(3)
+    }
+    
+    func updatePreviewEdge() {
+        let currentZ: String
+        if filledSteps == 0 {
+            currentZ = StatusZ
+        } else {
+            switch filledSteps {
+            case 1: currentZ = logicRows[1].c1
+            case 2: currentZ = logicRows[1].c2
+            case 3: currentZ = logicRows[1].c3
+            case 4: currentZ = logicRows[1].c4
+            case 5: currentZ = logicRows[1].c5
+            case 6: currentZ = logicRows[1].c6
+            default: currentZ = StatusZ
+            }
+        }
+        let nextZ = nextState(from: currentZ, by: StatusX)
+        previewEdge = Edge(from: currentZ, to: nextZ, input: StatusX)
+        nextPreviewState = nextZ
     }
     
     func runMachine() {
@@ -88,13 +108,14 @@ struct Lab3_MS: View {
         if filledSteps == 6 {
             showAlert = true
             return
-        }
-        else if filledSteps == 0 {
+        } else if filledSteps == 0 {
             logicRows[0].c0 = "-"
             logicRows[1].c0 = StatusZ
         }
         showAlert = false
+        
         let stepIndex = filledSteps + 1
+        
         let currentZ: String
         if filledSteps == 0 {
             currentZ = StatusZ
@@ -138,7 +159,9 @@ struct Lab3_MS: View {
         default: break
         }
         
+        StatusZ = nextZ
         filledSteps += 1
+        updatePreviewEdge()
     }
     
     func ClearTable() {
@@ -147,6 +170,9 @@ struct Lab3_MS: View {
         isBlocked = true
         filledSteps = 0
         usedEdges.removeAll()
+        previewEdge = nil
+        nextPreviewState = nil
+        StatusZ = "z1"
     }
     
     var body: some View {
@@ -191,6 +217,9 @@ struct Lab3_MS: View {
                     .frame(width: 220)
                     .frame(height: 70)
                     .background(Color.black.mix(with: .white, by: 0.25))
+                    .onChange(of: StatusZ) { _ in
+                        updatePreviewEdge()
+                    }
                 }
                 .border(Color.black, width: 3)
                 .disabled(!isBlocked)
@@ -207,6 +236,9 @@ struct Lab3_MS: View {
                     .padding(1)
                     .frame(height: 70)
                     .background(Color.black.mix(with: .white, by: 0.2))
+                    .onChange(of: StatusX) { _ in
+                        updatePreviewEdge()
+                    }
                 }
                 .border(Color.black, width: 3)
             }
@@ -226,7 +258,6 @@ struct Lab3_MS: View {
                     .cornerRadius(5)
                     .padding(1)
             }
-            
             
             GroupBox("Логика работы автомата") {
                 Table(logicRows) {
@@ -282,63 +313,57 @@ struct Lab3_MS: View {
             }
             .frame(width: 565)
             
-            
             GroupBox("Граф состояний автомата") {
                 ZStack {
-
                     ForEach(edges) { edge in
                         if let p1 = nodePositions[edge.from],
                            let p2 = nodePositions[edge.to] {
-                            Path { path in
-                                path.move(to: p1)
-                                path.addLine(to: p2)
+                            Path {
+                                $0.move(to: p1)
+                                $0.addLine(to: p2)
                             }
                             .stroke(Color.gray, lineWidth: 1.5)
-                            
-   
-                            let mid = CGPoint(
-                                x: (p1.x + p2.x) / 2,
-                                y: (p1.y + p2.y) / 2 + 5
-                            )
-                            Text(edge.input)
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(.blue)
-                                .position(mid)
                         }
                     }
                     
-
+                    if let edge = previewEdge,
+                       let p1 = nodePositions[edge.from],
+                       let p2 = nodePositions[edge.to] {
+                        Path {
+                            $0.move(to: p1)
+                            $0.addLine(to: p2)
+                        }
+                        .stroke(Color.orange, style: StrokeStyle(lineWidth: 3, dash: [6]))
+                    }
+                    
                     ForEach(edges.filter { usedEdges.contains($0) }) { edge in
                         if let p1 = nodePositions[edge.from],
                            let p2 = nodePositions[edge.to] {
-                            Path { path in
-                                path.move(to: p1)
-                                path.addLine(to: p2)
+                            Path {
+                                $0.move(to: p1)
+                                $0.addLine(to: p2)
                             }
                             .stroke(Color.red, lineWidth: 4)
-                            
-                            Text(edge.input)
-                                .font(.system(size: 12, weight: .heavy))
-                                .foregroundColor(.red)
-                                .position(CGPoint(x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 + 5))
                         }
                     }
                     
-                    
                     ForEach(nodePositions.keys.sorted(), id: \.self) { z in
                         if let p = nodePositions[z] {
+                            let isCurrent = (z == StatusZ)
+                            let isNext    = (z == nextPreviewState && z != StatusZ)
+                            
                             Circle()
-                                .fill(z == StatusZ ? Color.green : Color.white)
-                                .overlay(
-                                    Circle()
-                                        .stroke(Color.black, lineWidth: 2)
+                                .fill(
+                                    isCurrent
+                                    ? Color.green
+                                    : (isNext ? Color.red : Color.black)
                                 )
                                 .frame(width: 35, height: 35)
+                                .overlay(Circle().stroke(Color.black, lineWidth: 2))
                                 .position(p)
                             
                             Text(z)
-                                .font(.system(size: 12, weight: .heavy))
-                                .foregroundColor(.black)
+                                .foregroundColor(.white)
                                 .position(p)
                         }
                     }
@@ -348,7 +373,10 @@ struct Lab3_MS: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(12)
-        .onAppear { ClearTable() }
+        .onAppear {
+            ClearTable()
+            updatePreviewEdge()
+        }
         .alert("Таблица заполнена", isPresented: $showAlert) {
             Button("ОК", role: .close) { }
         } message: {
