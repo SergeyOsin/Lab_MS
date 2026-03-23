@@ -7,38 +7,69 @@ struct Main: App {
     var body: some Scene {
         WindowGroup {MainView()}
             .windowResizability(.contentSize)
-        WindowGroup{Lab3_MS()}.windowResizability(.automatic)
     }
 }
 
 
 struct MainView: View {
     let RADIUS: CGFloat=10;
+    let FONTDESIGN: Font.Design = .rounded;
     private var NameDisc: String = "'Моделирование систем'";
     var body: some View {
         NavigationStack{
-            Text("Осин С.М. 23ВП2. Вариант - 16")
+            Text("Осин С.М. 23ВП2.")
                 .font(Font.largeTitle)
                 .foregroundStyle(Color.primary.mix(with: .red, by: 0.2))
+            Text("Лабораторные работы по дисциплине \(NameDisc)")
+                .font(.title)
             VStack(spacing: 15){
-                Text("Лабораторные работы по дисциплине \(NameDisc)")
-                    .font(.title)
+                HStack{
                 NavigationLink("Лабораторная работа №2"){
                     Lab2_MS()
                 }.background(Color.white)
-                    .fontDesign(Font.Design.rounded)
+                    .fontDesign(FONTDESIGN)
                     .cornerRadius(RADIUS)
                     .foregroundStyle(Color.black)
+                    .buttonStyle(.bordered)
                 NavigationLink("Лабораторная работа №3"){
                     Lab3_MS()
-                }.background(Color.blue)
+                }.background(.white)
                     .cornerRadius(RADIUS)
-                NavigationLink("Лабораторная работа №4"){
-                    Lab4_MS()
-                } .background(Color.red)
-                    .cornerRadius(RADIUS)
-            }.frame(width:750, height:250)
-            
+                    .foregroundStyle(.black)
+                    .buttonStyle(.bordered)
+            }
+                HStack{
+                    NavigationLink("Лабораторная работа №4"){
+                        Lab4_MS()
+                    } .background(.blue)
+                        .cornerRadius(RADIUS)
+                        .foregroundStyle(.white)
+                        .buttonStyle(.glass)
+                    NavigationLink("Лабораторная работа №5"){}
+                        .background(.blue)
+                        .foregroundStyle(.white)
+                        .disabled(true)
+                        .cornerRadius(RADIUS)
+                        .font(.title2)
+                        .buttonStyle(.glass)
+                }
+                HStack{
+                    NavigationLink("Лабораторная работа №6"){}.disabled(true)
+                        .background(Color.red)
+                        .foregroundStyle(.white)
+                        .cornerRadius(RADIUS)
+                    NavigationLink("Лабораторная работа №7"){}
+                        .foregroundStyle(.white)
+                        .background(.red)
+                        .font(.title2)
+                        .disabled(true)
+                        .cornerRadius(RADIUS)
+                        
+                }
+                NavigationLink("Лабораторная работа №8"){}.disabled(true)
+                    .buttonStyle(.borderedProminent)
+                
+            }.frame(width:750, height: 220)
         }
         .overlay(alignment: .bottomTrailing){
             Button("Выйти"){
