@@ -184,23 +184,33 @@ struct Lab3_MS: View {
             
             GroupBox("Таблица переходов") {
                 Table(tableData) {
-                    TableColumn("Вход.символы") { row in
+                    TableColumn("Входные символы") { row in
                         Text(row.x)
                             .frame(maxWidth: .infinity, alignment: .center)
                     }
-                    .width(100)
+                    .width(130)
                     
-                    TableColumn("z1") { row in Text(row.z1).frame(maxWidth: .infinity, alignment: .center) }.width(45)
+                    TableColumn("z1") { row in Text(row.z1).frame(maxWidth: .infinity, alignment: .center) }
+                        .width(45)
+                        .alignment(.center)
                     TableColumn("z2") { row in Text(row.z2).frame(maxWidth: .infinity, alignment: .center) }.width(45)
+                        .alignment(.center)
                     TableColumn("z3") { row in Text(row.z3).frame(maxWidth: .infinity, alignment: .center) }.width(45)
+                        .alignment(.center)
                     TableColumn("z4") { row in Text(row.z4).frame(maxWidth: .infinity, alignment: .center) }.width(45)
+                        .alignment(.center)
                     TableColumn("z5") { row in Text(row.z5).frame(maxWidth: .infinity, alignment: .center) }.width(45)
+                        .alignment(.center)
                     TableColumn("z6") { row in Text(row.z6).frame(maxWidth: .infinity, alignment: .center) }.width(45)
+                        .alignment(.center)
                 }
-                .font(.system(size: 13, weight: .medium))
-                .frame(height: 110)
+                .font(Font.headline)
+                .font(.system(size: 14, weight: .medium))
+                .frame(height: 105)
             }
-            .frame(width: 500)
+            .frame(width: 530)
+            .cornerRadius(20)
+
             
             HStack(alignment: .top, spacing: 3) {
                 GroupBox {
@@ -368,10 +378,10 @@ struct Lab3_MS: View {
                         }
                     }
                 }
-                .frame(width: 450, height: 250)
+                .frame(width: 420, height: 220)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(minWidth: 700, maxWidth: 700, minHeight: 630, maxHeight: 630)
         .padding(12)
         .onAppear {
             ClearTable()
