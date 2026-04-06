@@ -15,6 +15,7 @@ struct StatsData: Identifiable {
     let count: Double
 }
 
+
 struct Transition: Identifiable {
     let id = UUID()
     let from: String

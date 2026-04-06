@@ -24,20 +24,20 @@ struct MainView: View {
                 .font(.title)
             VStack(spacing: 15){
                 HStack{
-                NavigationLink("Лабораторная работа №2"){
-                    Lab2_MS()
-                }.background(Color.white)
-                    .fontDesign(FONTDESIGN)
-                    .cornerRadius(RADIUS)
-                    .foregroundStyle(Color.black)
-                    .buttonStyle(.bordered)
-                NavigationLink("Лабораторная работа №3"){
-                    Lab3_MS()
-                }.background(.white)
-                    .cornerRadius(RADIUS)
-                    .foregroundStyle(.black)
-                    .buttonStyle(.bordered)
-            }
+                    NavigationLink("Лабораторная работа №2"){
+                        Lab2_MS()
+                    }.background(Color.white)
+                        .fontDesign(FONTDESIGN)
+                        .cornerRadius(RADIUS)
+                        .foregroundStyle(Color.black)
+                        .buttonStyle(.bordered)
+                    NavigationLink("Лабораторная работа №3"){
+                        Lab3_MS()
+                    }.background(.white)
+                        .cornerRadius(RADIUS)
+                        .foregroundStyle(.black)
+                        .buttonStyle(.bordered)
+                }
                 HStack{
                     NavigationLink("Лабораторная работа №4"){
                         Lab4_MS()
@@ -45,10 +45,9 @@ struct MainView: View {
                         .cornerRadius(RADIUS)
                         .foregroundStyle(.white)
                         .buttonStyle(.glass)
-                    NavigationLink("Лабораторная работа №5"){}
+                    NavigationLink("Лабораторная работа №5"){Lab5_MS()}
                         .background(.blue)
                         .foregroundStyle(.white)
-                        .disabled(true)
                         .cornerRadius(RADIUS)
                         .font(.title2)
                         .buttonStyle(.glass)
