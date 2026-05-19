@@ -53,20 +53,19 @@ struct MainView: View {
                         .buttonStyle(.glass)
                 }
                 HStack{
-                    NavigationLink("Лабораторная работа №6"){}.disabled(true)
-                        .background(Color.red)
+                    NavigationLink("Лабораторная работа №6"){
+                        Lab6_MS()
+                    }.background(Color.red)
                         .foregroundStyle(.white)
                         .cornerRadius(RADIUS)
-                    NavigationLink("Лабораторная работа №7"){}
-                        .foregroundStyle(.white)
+                    NavigationLink("Лабораторная работа №7"){
+                        Lab7_MS()
+                    }.foregroundStyle(.white)
                         .background(.red)
                         .font(.title2)
-                        .disabled(true)
                         .cornerRadius(RADIUS)
                         
                 }
-                NavigationLink("Лабораторная работа №8"){}.disabled(true)
-                    .buttonStyle(.borderedProminent)
                 
             }.frame(width:750, height: 220)
         }
